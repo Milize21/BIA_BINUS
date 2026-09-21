@@ -1,0 +1,13 @@
+# Config Streamlit untuk proyek ini. Ikut di-commit supaya seragam bertiga.
+
+[server]
+# Auto-rerun tiap app.py disimpen. Default Streamlit itu false -- tanpa ini,
+# browser cuma nampilin prompt "Source file changed" dan harus diklik manual.
+runOnSave = true
+
+# Jangan buka browser sendiri tiap `streamlit run` (berisik pas bolak-balik restart).
+headless = true
+
+[browser]
+# Mata kuliah, bukan produk. Tidak usah kirim statistik pemakaian.
+gatherUsageStats = false

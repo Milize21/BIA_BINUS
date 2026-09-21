@@ -1,0 +1,36 @@
+# Dokumen perencanaan internal kelompok. Sengaja TIDAK dipublikasikan:
+# isinya pembagian kerja, strategi, dan pemetaan ke rubrik penilaian.
+PLAN.md
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Data mentah hasil scraping: gede & bisa di-regenerate. Jangan masuk repo.
+data/raw/*
+!data/raw/.gitkeep
+
+# Kamus InSet: download sendiri, lihat docstring src/labeling.py
+lexicon/*.tsv
+
+# Artefak MODE DEMO (Tahap 2). Regenerate kapan saja:
+#   python src/make_dummy_raw.py && python src/preprocess.py --demo && ...
+data/processed/*_demo.csv
+data/processed/dataset_demo.csv
+data/model/demo_*
+
+# Hasil antara pipeline asli -- turunan, bukan sumber.
+data/processed/tweets_clean.csv
+data/processed/tweets_labeled.csv
+
+# Dataset final & dummy TETAP di-commit -- dashboard butuh, dan ini deliverable.
+# validasi_manual.csv juga di-commit: isinya kerja tangan bertiga, tidak bisa dibikin ulang.
+!data/processed/validasi_manual.csv
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

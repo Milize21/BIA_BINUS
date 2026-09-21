@@ -1,0 +1,26 @@
+# ISYS8036042 BI & Analytics — Kelompok 04
+# Analisis Sentimen Pelantikan Prabowo-Gibran
+# Install:  uv venv --python 3.12  &&  uv pip install -r requirements.txt
+
+# --- Tahap 1: scraping X ---
+selenium>=4.25,<5            # Selenium 4.6+ sudah punya Selenium Manager (driver auto-download)
+
+# --- Tahap 2: preprocessing, labeling, modeling ---
+pandas>=2.2,<3
+numpy>=1.26,<3
+Sastrawi>=1.0.1              # stemmer + stopword remover Bahasa Indonesia
+scikit-learn>=1.5,<2         # SVM + confusion matrix + classification report
+matplotlib>=3.9,<4           # render confusion_matrix.png
+
+# --- Tahap 4: dashboard ---
+streamlit>=1.39,<2
+plotly>=6,<8                 # chart interaktif (bar, tren, bubble)
+                             # CATATAN: banyak tutorial di internet masih plotly 5.x.
+                             # Pakai plotly.express (px) -- API-nya stabil lintas versi.
+wordcloud>=1.9,<2            # word cloud positif vs negatif
+
+# --- Versi yang sudah diuji jalan (22 Sep 2026, Python 3.12.14) ---
+# streamlit 1.64.0 · plotly 7.1.0 · pandas 2.3.3 · numpy 2.5.3
+# wordcloud 1.9.6 · scikit-learn 1.9.1 · matplotlib 3.11.2
+# selenium 4.49.0 · Sastrawi 1.0.1
+# Kalau ada yang error aneh, samakan dulu versinya dengan daftar ini.

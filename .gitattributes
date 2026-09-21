@@ -1,0 +1,18 @@
+# Normalisasi akhiran baris supaya seragam di mesin siapa pun.
+* text=auto
+
+# Batch file WAJIB CRLF. Dengan akhiran baris LF, cmd.exe bisa salah membaca
+# label dan goto -- gejalanya aneh dan susah dilacak.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Kode & konfigurasi: LF, konvensi lintas platform.
+*.py   text eol=lf
+*.md   text eol=lf
+*.toml text eol=lf
+*.txt  text eol=lf
+*.tsv  text eol=lf
+
+# Data: jangan disentuh, biar hash-nya stabil.
+*.csv  -text
+*.png  binary
