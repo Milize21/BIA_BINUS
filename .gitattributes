@@ -6,6 +6,13 @@
 *.bat text eol=crlf
 *.cmd text eol=crlf
 
+# Peluncur macOS WAJIB LF, dan ini kebalikannya yang di atas. Berkas .command
+# ditulis di Windows, dan tanpa aturan ini git meng-checkout-nya dengan CRLF.
+# Di macOS akibatnya bash membaca \r sebagai bagian dari perintah, lalu gagal
+# dengan pesan menyesatkan semacam: command not found: $'\r'.
+*.command text eol=lf
+*.sh      text eol=lf
+
 # Kode & konfigurasi: LF, konvensi lintas platform.
 *.py   text eol=lf
 *.md   text eol=lf

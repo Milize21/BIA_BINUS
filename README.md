@@ -13,15 +13,25 @@ Fokusnya bukan sekadar menghitung positif/negatif, tapi **perubahannya**: apakah
 
 ## Cara menjalankan
 
-### Windows — klik dua kali
+### Klik dua kali
 
+| Sistem | Berkas |
+|---|---|
+| Windows | `JALANKAN.bat` |
+| macOS | `JALANKAN.command` |
+
+Keduanya mengerjakan hal yang sama: memeriksa enam kebutuhan, memasang sendiri yang kurang, lalu menampilkan menu untuk menjalankan dashboard atau pipeline. **Tidak perlu memasang Python lebih dulu** — kalau belum ada, dipasang otomatis lewat [uv](https://docs.astral.sh/uv/).
+
+Di macOS, kalau klik dua kali tidak menghasilkan apa-apa, biasanya satu dari dua hal ini — dua-duanya cuma sekali di awal:
+
+```bash
+chmod +x JALANKAN.command                      # izin eksekusi hilang
+xattr -d com.apple.quarantine JALANKAN.command # proyek diunduh sebagai ZIP
 ```
-JALANKAN.bat
-```
 
-Satu berkas itu memeriksa semua kebutuhan, memasang sendiri yang kurang, lalu menampilkan menu untuk menjalankan dashboard atau pipeline. **Tidak perlu memasang Python lebih dulu** — kalau belum ada, dipasang otomatis lewat [uv](https://docs.astral.sh/uv/).
+Yang kedua hanya terjadi kalau proyeknya diunduh sebagai ZIP. Kalau di-`git clone`, macOS tidak menandainya karantina.
 
-### Manual (macOS / Linux / yang suka terminal)
+### Manual (Linux / yang suka terminal)
 
 ```bash
 uv python install 3.12
@@ -105,6 +115,7 @@ Kamusnya sengaja tidak ikut di-commit, dan **tidak boleh dikarang sendiri** — 
 
 ```
 JALANKAN.bat               <- pemeriksa kebutuhan + peluncur (Windows)
+JALANKAN.command           <- padanannya untuk macOS
 requirements.txt
 dashboard/app.py           <- Streamlit
 src/
