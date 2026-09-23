@@ -277,19 +277,29 @@ def main() -> None:
     # Dua penanda, dipakai berbarengan karena masing-masing punya lubang:
     #
     #   kolom `kepotong`  dari scrape.py, dibaca langsung dari DOM (ada atau
-    #                     tidaknya tombol "Show more"). Ini penanda yang PASTI,
-    #                     tapi cuma ada di CSV hasil scrape.py.
+    #                     tidaknya tombol "Show more"). PASTI, tapi cuma ada di
+    #                     CSV hasil scrape.py.
     #   RE_KEPOTONG       menebak dari teksnya. Satu-satunya yang bisa dipakai
     #                     untuk data dummy dan CSV dari sumber lain.
     #
-    # Regex sendirian tidak cukup: kalau "…" ternyata berada di elemen tombol
-    # dan bukan di dalam teks tweet, teks yang terpotong akan lolos seolah utuh
-    # -- persis kesalahan yang paling mahal di sini, karena separuh kalimat yang
-    # hilang bisa membalik sentimennya tanpa ada yang sadar.
+    # Keduanya TIDAK digabung, dan ini hasil pengukuran, bukan selera. Di panen
+    # asli 3.097 baris: kolom menandai 407 tweet, regex menangkap 591, tapi yang
+    # disepakati keduanya cuma 2. Diperiksa satu per satu, 589 tangkapan regex
+    # itu ternyata berita yang teksnya UTUH dan cuma URL di ekornya yang
+    # dipendekkan X jadi "kumparan.com/kumparannews/h…". Membuangnya berarti
+    # kehilangan 19% panen tanpa alasan -- justru kelompok berita yang paling
+    # rapi teksnya.
+    #
+    # Regex itu dulu ditala pada data DUMMY, yang URL-nya tidak pernah
+    # dipendekkan, jadi kelemahan ini tidak mungkin kelihatan di sana.
+    #
+    # Maka: kalau kolomnya ada, PERCAYA KOLOM dan jangan jalankan regex sama
+    # sekali. Regex hanya dipakai kalau kolomnya memang tidak ada.
     n = len(df)
-    kepotong = df["teks"].astype(str).str.contains(RE_KEPOTONG, regex=True)
     if "kepotong" in df.columns:
-        kepotong |= df["kepotong"].astype(str).str.strip() == "1"
+        kepotong = df["kepotong"].astype(str).str.strip() == "1"
+    else:
+        kepotong = df["teks"].astype(str).str.contains(RE_KEPOTONG, regex=True)
     df = df[~kepotong]
     jejak.append(("tweet kepotong dibuang", n - len(df), "PLAN.md bagian 10"))
 
