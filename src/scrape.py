@@ -19,8 +19,9 @@ cuma nol tweet, dan itu menyesatkan.
 
 Skrip ini TIDAK PERNAH meminta atau menyimpan password. Yang dilakukan:
 `--login` membuka jendela browser biasa, kamu login sendiri seperti biasa
-(termasuk 2FA kalau ada), tekan Enter di terminal, lalu COOKIE sesinya
-disimpan ke .x_session.json. Jalan berikutnya cookie itu dipakai ulang.
+(termasuk 2FA kalau ada), dan begitu kamu sampai beranda skripnya TAHU SENDIRI
+lalu menyimpan COOKIE sesinya ke .x_session.json. Tidak ada yang perlu ditekan
+di terminal. Jalan berikutnya cookie itu dipakai ulang.
 
     .x_session.json itu setara kunci akun. Sudah masuk .gitignore.
     JANGAN di-commit, jangan dikirim ke grup, jangan ditaruh di Drive.
@@ -67,21 +68,18 @@ Maka tanggal DIKONVERSI KE WIB (UTC+7) sebelum ditulis. Kalau tim memutuskan
 sebaliknya, pakai --utc, dan catat keputusannya -- ini kelihatan langsung di
 heatmap dan wajib disebut di Methodology.
 
-SATU HAL YANG GAMPANG MENJEBAK: `since:`/`until:` ditafsirkan X dalam UTC,
-sedangkan waktu yang kita TULIS sudah WIB. Jadi query satu hari
-"since:2024-10-20 until:2024-10-21" sebenarnya memanen 20 Okt 07:00 WIB sampai
-21 Okt 07:00 WIB -- bergeser 7 jam, bukan satu hari WIB yang utuh.
+`since:`/`until:` TIDAK dihitung dalam UTC. Keduanya mengikuti zona waktu AKUN
+yang dipakai login, dan `until:D` bersifat inklusif -- seluruh hari D ikut.
+Diukur langsung: "since:2024-10-20 until:2024-10-20" mengembalikan tweet 20 Okt
+00:00 sampai 23:59 WIB, tepat satu hari WIB penuh.
 
-Untuk panen RENTANG PENUH ini tidak jadi masalah: hari-hari tetangganya saling
-menambal, tiap tweet tetap terpanen sekali (dedup pakai id), dan preprocess.py
-menentukan `periode` dari tanggal WIB-nya, bukan dari query mana ia berasal.
+Konsekuensinya yang harus diingat: hasil panen bergantung pada SETELAN ZONA
+WAKTU AKUN. Kalau anggota tim lain memanen dengan akun yang zonanya bukan WIB,
+batas harinya bergeser dan angkanya tidak akan sama persis. Kalau panennya
+dibagi ke beberapa orang, samakan dulu setelan zona waktu akunnya, dan sebut
+di Methodology bahwa panen dilakukan dengan akun ber-zona WIB.
 
-Yang berbahaya adalah panen SEPOTONG. Kalau kamu cuma menjalankan Hari-H
-(--mulai 2024-10-20 --selesai 2024-10-20), tweet 20 Okt 00:00-07:00 WIB --
-justru pagi hari pelantikan -- TIDAK ikut terpanen, dan yang malah ikut adalah
-21 Okt 00:00-07:00 WIB yang sudah masuk periode `sesudah`. Kalau butuh satu
-hari WIB yang benar-benar utuh, panen sehari sebelum dan sesudahnya juga, lalu
-biarkan preprocess.py yang memilah berdasarkan tanggal.
+Untuk memastikan sendiri kapan pun ragu: python src/cek_query.py
 
 === SOPAN SANTUN, DAN KENAPA BUKAN SEKADAR BASA-BASI ===
 
@@ -164,6 +162,14 @@ SEL_SHOWMORE = '[data-testid="tweet-text-show-more-link"]'
 SEL_LIKE = '[data-testid="like"], [data-testid="unlike"]'
 SEL_RT = '[data-testid="retweet"], [data-testid="unretweet"]'
 SEL_WAKTU = "time"
+
+# Halaman pijakan untuk memasang cookie: pasti 200, berkas teks kecil tanpa JS,
+# dan paling ringan buat server X. Alasan lengkapnya di muat_sesi().
+URL_PIJAKAN = "https://x.com/robots.txt"
+
+# Tanpa dua ini sesi login tidak ada artinya: auth_token identitasnya, ct0 token
+# CSRF yang diminta X di tiap permintaan.
+COOKIE_WAJIB = ("auth_token", "ct0")
 
 # Bukti bahwa sesi BENAR-BENAR login. Semuanya cuma muncul kalau sudah masuk;
 # di halaman pengunjung yang ada hanya BottomBar dan tombol-tombol "Lanjutkan
@@ -255,21 +261,53 @@ def simpan_sesi(driver) -> None:
 
 
 def muat_sesi(driver) -> bool:
-    """Pasang cookie yang tersimpan. False kalau berkasnya belum ada."""
+    """
+    Pasang cookie yang tersimpan. False kalau berkasnya belum ada.
+
+    JANGAN ganti URL_PIJAKAN jadi "https://x.com/". Root-nya membalas HTTP 403
+    ke browser otomatis, dan halaman error punya origin `null` -- akibatnya
+    SEMUA add_cookie ditolak InvalidCookieDomainException padahal cookie-nya
+    sendiri sehat dan belum kedaluwarsa. Gejalanya menyesatkan: yang terbaca
+    seolah sesinya kedaluwarsa, jadi orang mengulang --login berkali-kali dan
+    tetap gagal. Cookie hanya bisa dipasang kalau browser sedang berada di
+    origin yang sama DAN halamannya benar-benar termuat.
+    """
     if not SESI.exists():
         return False
-    # Cookie hanya bisa dipasang kalau domainnya sudah cocok, jadi buka dulu.
-    driver.get("https://x.com/")
+    driver.get(URL_PIJAKAN)
     tidur(1.5, 2.5)
-    rusak = 0
+
+    terpasang, rusak = set(), []
     for c in json.loads(SESI.read_text(encoding="utf-8")):
         c.pop("sameSite", None)  # nilai dari Chrome kadang ditolak saat dipasang
         try:
             driver.add_cookie(c)
-        except WebDriverException:
-            rusak += 1
+            terpasang.add(c.get("name"))
+        except WebDriverException as e:
+            rusak.append(type(e).__name__)
+
+    # Dulu bagian ini cuma mencetak "(N cookie dilewati, biasanya tidak apa-apa)"
+    # -- kalimat yang tetap terdengar menenangkan walaupun yang gagal SEMUANYA.
+    # Sekarang yang diperiksa cookie yang menentukan, dan kalau ia tidak
+    # terpasang skripnya berhenti, bukan lanjut memanen halaman kosong.
+    hilang = [n for n in COOKIE_WAJIB if n not in terpasang]
+    if hilang:
+        raise SystemExit(
+            "Cookie penting gagal dipasang: {}{}\n"
+            "  {} dari {} cookie ditolak browser.\n\n"
+            "  Kalau SEMUA ditolak, biasanya halaman pijakan tidak termuat --\n"
+            "  coba buka {} di browser biasa.\n"
+            "  Kalau cuma sebagian, sesinya kemungkinan sudah kedaluwarsa:\n"
+            "    python src/scrape.py --login".format(
+                ", ".join(hilang),
+                f" ({rusak[0]})" if rusak else "",
+                len(rusak),
+                len(rusak) + len(terpasang),
+                URL_PIJAKAN,
+            )
+        )
     if rusak:
-        print(f"  ({rusak} cookie dilewati, biasanya tidak apa-apa)")
+        print(f"  ({len(rusak)} cookie sampingan dilewati, yang wajib aman)")
     return True
 
 
@@ -299,7 +337,38 @@ def sudah_login(driver) -> bool:
         return False
 
 
-def login_manual() -> None:
+def tunggu_login(driver, batas_menit: float) -> bool:
+    """
+    Tunggu sampai login terdeteksi sendiri. True kalau berhasil.
+
+    SENGAJA TIDAK PAKAI input(). Dulu fungsi ini menyuruh menekan Enter, dan itu
+    mematikan skripnya di terminal mana pun yang stdin-nya tidak tersambung --
+    dijalankan dari editor, dari skrip lain, dari agen -- langsung EOFError
+    sebelum sempat menyimpan apa pun.
+
+    JUGA TIDAK memanggil sudah_login(), walaupun pertanyaannya sama persis.
+    Fungsi itu PINDAH HALAMAN ke /home untuk memeriksa, dan kalau dipanggil
+    sementara kamu masih mengetik, formulir loginnya hilang di tengah jalan --
+    termasuk kode 2FA yang sudah separuh dimasukkan. Di sini halamannya
+    dibiarkan apa adanya, cuma diintip apakah penandanya sudah muncul.
+    """
+    batas = time.time() + batas_menit * 60
+    lapor_berikutnya = time.time() + 30
+    while time.time() < batas:
+        try:
+            if driver.find_elements(By.CSS_SELECTOR, SEL_BUKTI_LOGIN):
+                return True
+        except WebDriverException:
+            print("\n  Jendela Chrome-nya ditutup. Cookie TIDAK disimpan.")
+            return False
+        if time.time() >= lapor_berikutnya:
+            print(f"    ... masih menunggu ({(batas - time.time()) / 60:.0f} menit lagi)")
+            lapor_berikutnya = time.time() + 30
+        time.sleep(2)
+    return False
+
+
+def login_manual(batas_menit: float) -> None:
     """Buka browser, biarkan pengguna login sendiri, lalu simpan cookie."""
     print()
     print("  ============================================================")
@@ -310,17 +379,21 @@ def login_manual() -> None:
     print("  Password diketik langsung ke X, TIDAK lewat skrip ini dan")
     print("  tidak disimpan di mana pun.")
     print()
+    print("  Tidak perlu menekan apa pun di terminal ini -- begitu kamu")
+    print("  sampai beranda, cookie-nya tersimpan sendiri.")
+    print()
     print("  Pakai akun cadangan, bukan akun utama.")
     print()
 
     driver = buat_driver(headless=False)
     try:
         driver.get("https://x.com/login")
-        input("  Kalau sudah sampai beranda, tekan Enter di sini ... ")
-        if not sudah_login(driver):
-            print("\n  Sepertinya belum sampai beranda. Cookie TIDAK disimpan.")
-            print("  Coba lagi: python src/scrape.py --login")
+        print(f"  Menunggu kamu selesai login (batas {batas_menit:.0f} menit) ...")
+        if not tunggu_login(driver, batas_menit):
+            print("\n  Login tidak terdeteksi. Cookie TIDAK disimpan.")
+            print("  Kalau tadi kurang waktu:  --login --tunggu 15")
             return
+        print("\n  Login terdeteksi.")
         simpan_sesi(driver)
     finally:
         driver.quit()
@@ -413,8 +486,24 @@ def panen_sehari(driver, keyword: str, hari: date, args) -> tuple[list[dict], bo
     halaman tidak membengkak. Jadi memanen harus dilakukan SAMBIL menggulir,
     bukan sekali di akhir -- kalau di akhir, yang tersisa cuma layar terakhir.
     """
-    besok = hari + timedelta(days=1)
-    query = f"{keyword} lang:id since:{hari:%Y-%m-%d} until:{besok:%Y-%m-%d}"
+    # DUA HAL DI QUERY INI SUDAH PERNAH SALAH. Jangan diubah tanpa mengukur
+    # ulang dengan src/cek_query.py.
+    #
+    # 1. TANPA `lang:id`. Kelihatannya masuk akal -- kita memang cuma mau tweet
+    #    Indonesia -- tapi digabung since:/until: hasilnya SELALU NOL. Diuji
+    #    pada 20 Okt 2024: dengan lang:id 0 tweet, tanpa lang:id 37 tweet, query
+    #    selebihnya sama persis. Gagalnya pun diam: X menjawab "No results",
+    #    bukan error, jadi 244 query bisa habis tanpa satu baris pun terkumpul.
+    #    Penyaringan bahasa dikerjakan belakangan; keyword-nya sudah frasa
+    #    Indonesia, jadi yang lolos mayoritas memang Indonesia.
+    #
+    # 2. `until:{hari}`, BUKAN besok. `until:D` itu INKLUSIF dan mengikuti zona
+    #    waktu akun (WIB untuk akun Indonesia), jadi since:D until:D = tepat
+    #    satu hari WIB penuh. Versi lama memakai until:besok sehingga tiap query
+    #    menjaring dua hari; karena hasil diurut terbaru-dulu dan ada plafon
+    #    --maks per hari, plafonnya habis dipakai hari yang lebih baru dan hari
+    #    yang lebih tua nyaris tidak kebagian.
+    query = f"{keyword} since:{hari:%Y-%m-%d} until:{hari:%Y-%m-%d}"
     # f=live = tab "Latest". Tanpa ini X memberi tab "Top" yang sudah disaring
     # algoritma -- hasilnya bias ke tweet populer dan tidak bisa dipakai untuk
     # mengukur distribusi sentimen.
@@ -548,6 +637,8 @@ def buat_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     p.add_argument("--login", action="store_true", help="login sekali, simpan cookie sesi")
+    p.add_argument("--tunggu", type=float, default=5.0,
+                   help="batas menit menunggu login selesai (dipakai dengan --login)")
     p.add_argument("--keyword", action="append", help="boleh diulang; default semua keyword")
     p.add_argument("--mulai", default=f"{MULAI:%Y-%m-%d}")
     p.add_argument("--selesai", default=f"{SELESAI:%Y-%m-%d}")
@@ -566,7 +657,7 @@ def main() -> None:
     args = buat_parser().parse_args()
 
     if args.login:
-        login_manual()
+        login_manual(args.tunggu)
         return
 
     # Jeda dikumpulkan di satu tempat supaya --cepat cukup mengubahnya di sini.
@@ -599,14 +690,6 @@ def main() -> None:
     print(f"  {mulai:%d %b} - {selesai:%d %b %Y}  |  waktu {'UTC' if args.utc else 'WIB (UTC+7)'}")
     if args.cepat:
         print("  MODE CEPAT -- jeda dipendekkan, risiko kena limit naik.")
-    # since:/until: dihitung X dalam UTC, waktu yang kita tulis sudah WIB. Pada
-    # panen rentang penuh hari-hari tetangga saling menambal; pada panen pendek
-    # tidak ada yang menambal, jadi ujungnya bolong 7 jam tanpa pemberitahuan.
-    if not args.utc and total_hari <= 3:
-        print(f"  CATATAN: rentang pendek ({total_hari} hari). Karena since:/until: dihitung")
-        print(f"  UTC, panen ini sebenarnya mulai {mulai:%d %b} 07:00 WIB dan berhenti")
-        print(f"  {selesai + timedelta(days=1):%d %b} 07:00 WIB -- pagi hari pertama tidak ikut.")
-        print("  Untuk satu hari WIB yang utuh, panen juga H-1 dan H+1.")
     print()
 
     driver = buat_driver(args.headless)
