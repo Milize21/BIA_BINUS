@@ -214,6 +214,20 @@ def buat_pembersih_lanjut(pakai_stemming: bool = True):
 def baca_mentah(demo: bool) -> pd.DataFrame:
     pola = "dummy_raw_*.csv" if demo else "*.csv"
     berkas = sorted(RAW_DIR.glob(pola))
+
+    # MODE ASLI TIDAK BOLEH MENYENTUH data karangan. Pola "*.csv" dulu ikut
+    # menyapu dummy_raw_*.csv, dan hasilnya paling buruk yang bisa terjadi di
+    # proyek ini: dataset_final.csv berisi campuran tweet asli dan tweet
+    # karangan, banner merah dummy di dashboard HILANG karena dataset_final
+    # sudah ada, dan yang dipresentasikan sebagian besar data bohongan --
+    # tanpa satu pun peringatan. Terukur waktu ketahuan: 16.103 baris dummy
+    # ikut terbaca bersama 2.909 baris asli.
+    if not demo:
+        dummy = [b for b in berkas if b.name.startswith("dummy_raw_")]
+        berkas = [b for b in berkas if not b.name.startswith("dummy_raw_")]
+        if dummy:
+            print(f"  {len(dummy)} berkas dummy_raw_* DILEWATI (mode asli, bukan --demo).")
+
     if not berkas:
         raise SystemExit(
             f"Tidak ada berkas '{pola}' di {RAW_DIR}.\n"
