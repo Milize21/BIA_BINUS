@@ -229,7 +229,7 @@ def main() -> None:
         cv=StratifiedKFold(5, shuffle=True, random_state=RANDOM_STATE),
         scoring="f1_macro",
     )
-    print(f"  macro-F1 = {cv.mean():.3f} ± {cv.std():.3f}   (per fold: "
+    print(f"  macro-F1 = {cv.mean():.3f} +/- {cv.std():.3f}   (per fold: "
           + ", ".join(f"{s:.3f}" for s in cv) + ")")
 
     metrik = {

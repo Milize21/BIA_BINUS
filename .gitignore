@@ -15,6 +15,11 @@ data/raw/*
 # Kamus InSet: download sendiri, lihat docstring src/labeling.py
 lexicon/*.tsv
 
+# SESI LOGIN X. Isinya cookie yang setara kunci akun -- siapa pun yang
+# memegang berkas ini bisa masuk ke akun itu tanpa password. JANGAN PERNAH
+# di-commit, dikirim ke grup, atau ditaruh di Drive bersama.
+.x_session.json
+
 # Artefak MODE DEMO (Tahap 2). Regenerate kapan saja:
 #   python src/make_dummy_raw.py && python src/preprocess.py --demo && ...
 data/processed/*_demo.csv

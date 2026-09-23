@@ -32,6 +32,10 @@ dipakai, karena separuh kalimatnya hilang -- sentimennya bisa terbalik dan word
 cloud jadi timpang. Jumlah yang dibuang dilaporkan di akhir; kalau angkanya
 besar, yang harus diperbaiki adalah scrape.py-nya, bukan di sini.
 
+Penandanya dua: kolom `kepotong` dari scrape.py (dibaca dari DOM, pasti) kalau
+kolomnya ada, DAN tebakan dari teks lewat RE_KEPOTONG yang selalu jalan. Lihat
+langkah 2 di bersihkan() untuk alasan keduanya dipakai bersama.
+
 === KOLOM `teks_asli` ===
 
 Kolom ini DIBAWA sampai akhir tapi TIDAK masuk 7 kolom kontrak. Gunanya buat
@@ -255,8 +259,23 @@ def main() -> None:
     jejak.append(("teks kosong dibuang", n - len(df), ""))
 
     # --- 2. tweet kepotong ("… Show more") ------------------------------
+    #
+    # Dua penanda, dipakai berbarengan karena masing-masing punya lubang:
+    #
+    #   kolom `kepotong`  dari scrape.py, dibaca langsung dari DOM (ada atau
+    #                     tidaknya tombol "Show more"). Ini penanda yang PASTI,
+    #                     tapi cuma ada di CSV hasil scrape.py.
+    #   RE_KEPOTONG       menebak dari teksnya. Satu-satunya yang bisa dipakai
+    #                     untuk data dummy dan CSV dari sumber lain.
+    #
+    # Regex sendirian tidak cukup: kalau "…" ternyata berada di elemen tombol
+    # dan bukan di dalam teks tweet, teks yang terpotong akan lolos seolah utuh
+    # -- persis kesalahan yang paling mahal di sini, karena separuh kalimat yang
+    # hilang bisa membalik sentimennya tanpa ada yang sadar.
     n = len(df)
     kepotong = df["teks"].astype(str).str.contains(RE_KEPOTONG, regex=True)
+    if "kepotong" in df.columns:
+        kepotong |= df["kepotong"].astype(str).str.strip() == "1"
     df = df[~kepotong]
     jejak.append(("tweet kepotong dibuang", n - len(df), "PLAN.md bagian 10"))
 

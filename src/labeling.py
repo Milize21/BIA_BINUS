@@ -208,7 +208,7 @@ def main() -> None:
     print("  Rata-rata kata kamus per tweet: %.2f" % df["kata_ketemu"].mean())
 
     print()
-    print("  ⚠ DIAGNOSA KELAS NETRAL (ini yang masuk Discussion)")
+    print("  !! DIAGNOSA KELAS NETRAL (ini yang masuk Discussion)")
     print("  " + "-" * 62)
     print(f"  Tweet tanpa SATU PUN kata kamus : {n_oov:,} ({n_oov / len(df) * 100:.1f}%)")
     if netral.sum():

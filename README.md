@@ -52,7 +52,7 @@ Dashboard terbuka di `http://localhost:8501`.
 |---|---|
 | Dashboard Streamlit — 6 tab, 16 chart | **selesai** |
 | Tahap 2: preprocessing, labeling, SVM | **selesai & teruji ujung-ke-ujung** |
-| `src/scrape.py` — pengambilan data dari X | **belum** — satu-satunya penghambat |
+| `src/scrape.py` — pengambilan data dari X | **sudah ditulis & lolos uji offline**, panen sungguhan belum dijalankan |
 | Kamus InSet di `lexicon/` | **perlu diunduh manual**, lihat di bawah |
 
 ### Dashboard masih memakai data contoh
@@ -85,6 +85,26 @@ Banner itu hilang sendiri begitu data asli masuk — tidak ada berkas yang perlu
 ```
 
 Tahap 1–3 berjalan **offline, sekali jalan**. Dashboard hanya **membaca** berkas — tidak ada scraping atau pelatihan model saat halaman dibuka, supaya cepat dibuka waktu presentasi.
+
+### Tahap 1 — scraping X
+
+```bash
+python src/scrape.py --login                    # sekali saja, di awal
+python src/scrape.py --mulai 2024-10-19 --selesai 2024-10-21   # coba 3 hari dulu
+python src/scrape.py                            # semua keyword, 61 hari
+```
+
+X menolak menampilkan hasil pencarian ke pengunjung yang belum login, dan hasilnya halaman kosong **tanpa pesan error**. Karena itu `--login` membuka jendela browser biasa dan kamu login sendiri di situ — skripnya tidak pernah meminta atau menyimpan password, hanya cookie sesinya.
+
+> `.x_session.json` setara kunci akun. Sudah masuk `.gitignore` — jangan di-commit, jangan dikirim ke grup. **Pakai akun cadangan, bukan akun utama.**
+
+Rentangnya dipecah **satu query per hari** karena X memotong hasil pencarian rentang panjang tanpa memberi tahu. Progres dicatat per hari, jadi kalau putus di tengah tinggal jalankan lagi — hari yang sudah selesai dilewati.
+
+Waktu tweet dikonversi ke **WIB (UTC+7)**; pakai `--utc` kalau tim memutuskan sebaliknya. Ini kelihatan langsung di heatmap jam × hari dan wajib disebut di Methodology.
+
+> **Jangan panen sepotong.** `since:`/`until:` dihitung X dalam **UTC**, sedangkan waktu yang ditulis sudah WIB — jadi query "satu hari" sebenarnya memanen jam 07:00 WIB sampai 07:00 WIB besoknya. Pada panen rentang penuh ini aman (hari-hari tetangga saling menambal), tapi kalau kamu cuma menjalankan Hari-H saja, **pagi 20 Okt 00:00–07:00 WIB tidak ikut terpanen**. Skripnya memperingatkan sendiri kalau rentangnya ≤ 3 hari.
+
+Yang sudah diuji tanpa menyentuh akun X: kontrak kolom ke `preprocess.py`, konversi WIB termasuk pergantian hari, deteksi tweet kepotong, semua jalur error CLI, dan penjagaan sesi login. Yang **belum**: panen sungguhan dalam keadaan login.
 
 ### Menguji Tahap 2 tanpa data asli
 
@@ -119,7 +139,7 @@ JALANKAN.command           <- padanannya untuk macOS
 requirements.txt
 dashboard/app.py           <- Streamlit
 src/
-  scrape.py                <- tahap 1 (belum jadi)
+  scrape.py                <- tahap 1: scraping X (Selenium)
   preprocess.py            <- tahap 2a: bersihkan + preprocessing teks
   labeling.py              <- tahap 2b: labeling berbasis lexicon
   train_model.py           <- tahap 2c: SVM + confusion matrix
