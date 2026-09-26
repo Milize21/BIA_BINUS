@@ -1,0 +1,174 @@
+{
+  "accuracy": 0.8835865991291211,
+  "precision": 0.734323496140347,
+  "recall": 0.6949421122710913,
+  "f1": 0.7057543176525839,
+  "f1_macro_cv_mean": 0.707864271237105,
+  "f1_macro_cv_std": 0.002642069604626903,
+  "n_latih": 90021,
+  "n_uji": 22506,
+  "n_fitur": 172175,
+  "per_kelas": {
+    "negatif": {
+      "precision": 0.918143656716418,
+      "recall": 0.9416407558000478,
+      "f1-score": 0.9297437714015823,
+      "support": 12543.0
+    },
+    "netral": {
+      "precision": 0.4048723897911833,
+      "recall": 0.22386144964720975,
+      "f1-score": 0.28831061544816194,
+      "support": 1559.0
+    },
+    "positif": {
+      "precision": 0.8799544419134396,
+      "recall": 0.9193241313660162,
+      "f1-score": 0.8992085661080075,
+      "support": 8404.0
+    },
+    "accuracy": 0.8835865991291211,
+    "macro avg": {
+      "precision": 0.734323496140347,
+      "recall": 0.6949421122710913,
+      "f1-score": 0.7057543176525839,
+      "support": 22506.0
+    },
+    "weighted avg": {
+      "precision": 0.868328848827825,
+      "recall": 0.8835865991291211,
+      "f1-score": 0.8739092314825125,
+      "support": 22506.0
+    }
+  },
+  "kata_paling_menentukan": {
+    "negatif": [
+      [
+        "kabinet",
+        6.2492
+      ],
+      [
+        "lama",
+        5.7394
+      ],
+      [
+        "apa",
+        5.5017
+      ],
+      [
+        "hina",
+        5.3359
+      ],
+      [
+        "atas",
+        5.2112
+      ],
+      [
+        "bukan",
+        5.154
+      ],
+      [
+        "datang",
+        5.1042
+      ],
+      [
+        "masalah",
+        5.0906
+      ],
+      [
+        "gabung",
+        5.0635
+      ],
+      [
+        "korupsi",
+        5.0166
+      ]
+    ],
+    "netral": [
+      [
+        "agenda besar",
+        2.9127
+      ],
+      [
+        "turut bahagia",
+        2.6969
+      ],
+      [
+        "sangat darurat",
+        2.6364
+      ],
+      [
+        "semua bangun",
+        2.6276
+      ],
+      [
+        "umkm nelayan",
+        2.6014
+      ],
+      [
+        "prabowo marwah",
+        2.5978
+      ],
+      [
+        "perintah istana",
+        2.5901
+      ],
+      [
+        "dasco presiden",
+        2.5853
+      ],
+      [
+        "hubung china",
+        2.5835
+      ],
+      [
+        "tugas klynews",
+        2.505
+      ]
+    ],
+    "positif": [
+      [
+        "presiden",
+        8.7031
+      ],
+      [
+        "selamat",
+        7.2196
+      ],
+      [
+        "dukung",
+        6.6707
+      ],
+      [
+        "mau",
+        6.4361
+      ],
+      [
+        "nilai",
+        5.9745
+      ],
+      [
+        "lantik",
+        5.9602
+      ],
+      [
+        "sama",
+        5.6684
+      ],
+      [
+        "lindung",
+        4.8804
+      ],
+      [
+        "allah",
+        4.8308
+      ],
+      [
+        "amanah",
+        4.7213
+      ]
+    ]
+  },
+  "catatan": "Label acuan berasal dari lexicon, bukan manusia. Angka di sini mengukur kemampuan SVM MEREPLIKASI pelabelan lexicon, bukan kemampuan mendeteksi sentimen. Lihat validasi_manual.csv untuk angka kualitas sentimen yang sebenarnya.",
+  "mode": "produksi"
+}
