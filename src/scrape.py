@@ -650,6 +650,10 @@ def buat_parser() -> argparse.ArgumentParser:
     p.add_argument("--headless", action="store_true", help="tanpa jendela browser")
     p.add_argument("--cepat", action="store_true", help="jeda lebih pendek; lebih gampang kena limit")
     p.add_argument("--ulang", action="store_true", help="abaikan catatan progres, panen ulang semua")
+    p.add_argument("--jeda-limit", type=float, default=20.0,
+                   help="menit menunggu sebelum mencoba ulang kalau kena limit X")
+    p.add_argument("--sabar-limit", type=int, default=3,
+                   help="berapa kali mencoba satu hari sebelum menyerah untuk keyword itu")
     return p
 
 
@@ -718,16 +722,34 @@ def main() -> None:
                 if tag in selesai_hari:
                     continue
 
-                try:
-                    baris, kena_limit = panen_sehari(driver, keyword, hari, args)
-                except WebDriverException as e:
-                    print(f"    {tag}  browser bermasalah: {str(e)[:70]}")
-                    break
-
-                if kena_limit:
-                    print(f"    {tag}  KENA LIMIT X -- berhenti untuk keyword ini.")
-                    print("           Tunggu 15-30 menit, lalu jalankan lagi.")
-                    print("           Progres tersimpan, hari yang sudah selesai dilewati.")
+                # Limit X itu SEMENTARA, jadi jangan diperlakukan sebagai akhir
+                # segalanya. Versi lama langsung break dan meninggalkan seluruh
+                # sisa hari untuk keyword ini: satu limit pada 6 Okt pernah
+                # memakan 42 hari sekaligus, dan ketimpangannya baru ketahuan di
+                # ringkasan akhir (satu keyword 5.817 tweet, yang lain 376).
+                # Sekarang ditunggu lalu dicoba ulang; menyerah hanya setelah
+                # beberapa kali gagal berturut-turut.
+                baris, kena_limit, menyerah = None, False, False
+                for percobaan in range(1, args.sabar_limit + 1):
+                    try:
+                        baris, kena_limit = panen_sehari(driver, keyword, hari, args)
+                    except WebDriverException as e:
+                        print(f"    {tag}  browser bermasalah: {str(e)[:70]}")
+                        menyerah = True
+                        break
+                    if not kena_limit:
+                        break
+                    if percobaan < args.sabar_limit:
+                        print(f"    {tag}  kena limit X, tunggu {args.jeda_limit:.0f} menit "
+                              f"(percobaan {percobaan}/{args.sabar_limit - 1})")
+                        time.sleep(args.jeda_limit * 60)
+                    else:
+                        print(f"    {tag}  MASIH KENA LIMIT setelah {args.sabar_limit - 1}x "
+                              "tunggu -- berhenti untuk keyword ini.")
+                        print("           Progres tersimpan. Jalankan lagi nanti,")
+                        print("           hari yang sudah selesai dilewati.")
+                        menyerah = True
+                if menyerah:
                     break
 
                 if args.lengkapi and baris:
