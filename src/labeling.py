@@ -113,8 +113,14 @@ def baca_lexicon(demo: bool) -> dict:
                 if len(bagian) < 2:
                     continue
                 kata, bobot = bagian[0].strip().lower(), bagian[1].strip()
+                # DIJUMLAH, bukan ditimpa. 1.143 kata InSet ada di KEDUA
+                # daftar ("menang" +4 dan -5, "sangat" +3 dan -5). Versi lama
+                # memakai `lex[kata] = bobot`, jadi negative.tsv yang dibaca
+                # belakangan selalu menang: "menang" jadi -5, bukan -1. Di data
+                # asli itu mendorong porsi negatif ke 75% tanpa satu pun
+                # peringatan. Bobot bersih = jumlah keduanya, sesuai InSet.
                 try:
-                    lex[kata] = float(bobot)
+                    lex[kata] = lex.get(kata, 0.0) + float(bobot)
                     n += 1
                 except ValueError:
                     continue
