@@ -4,6 +4,7 @@
 
 # --- Tahap 1: scraping X ---
 selenium>=4.25,<5            # Selenium 4.6+ sudah punya Selenium Manager (driver auto-download)
+openpyxl>=3.1,<4             # baca ekspor Apify .xlsx (src/impor_apify.py)
 
 # --- Tahap 2: preprocessing, labeling, modeling ---
 pandas>=2.2,<3

@@ -177,7 +177,7 @@ if not exist "%VENV_PY%" (
     set "PERLU_PERBAIKAN=1"
     goto :eof
 )
-"%VENV_PY%" -c "import streamlit,plotly,pandas,numpy,wordcloud,sklearn,selenium,matplotlib,scipy,Sastrawi" >nul 2>&1
+"%VENV_PY%" -c "import streamlit,plotly,pandas,numpy,wordcloud,sklearn,selenium,matplotlib,scipy,Sastrawi,openpyxl" >nul 2>&1
 if errorlevel 1 (
     set "STATUS_PAKET=BELUM"
     set "INFO_PAKET=ada yang kurang atau rusak"

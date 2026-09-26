@@ -39,3 +39,8 @@ data/processed/tweets_labeled.csv
 .idea/
 .DS_Store
 Thumbs.db
+
+# Hasil mentah Apify (~600 MB). Notebook di dalamnya juga memuat TOKEN API
+# Apify -- jangan pernah ikut ter-commit. Ubah ke CSV mentah lewat:
+#   python src/impor_apify.py Scraping/dataTwitter_final.xlsx
+Scraping/

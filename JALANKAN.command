@@ -117,7 +117,7 @@ periksa_paket() {
         PERLU_PERBAIKAN=1
         return
     fi
-    if ! "$VENV_PY" -c "import streamlit,plotly,pandas,numpy,wordcloud,sklearn,selenium,matplotlib,scipy,Sastrawi" >/dev/null 2>&1; then
+    if ! "$VENV_PY" -c "import streamlit,plotly,pandas,numpy,wordcloud,sklearn,selenium,matplotlib,scipy,Sastrawi,openpyxl" >/dev/null 2>&1; then
         STATUS_PAKET="BELUM"
         INFO_PAKET="ada yang kurang atau rusak"
         PERLU_PERBAIKAN=1
